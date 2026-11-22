@@ -46,6 +46,41 @@ export default function App() {
 
   useShortcuts();
 
+  // Hardware Android TV remote media keys forwarded by MainActivity.dispatchKeyEvent().
+  useEffect(() => {
+    type RemoteKeyAction = "toggle" | "play" | "pause" | "next" | "prev" | "seekForward" | "seekBackward";
+    const host = globalThis as { __amusicRemoteKey?: (action: RemoteKeyAction) => void };
+    host.__amusicRemoteKey = (action) => {
+      const p = usePlayer.getState();
+      switch (action) {
+        case "toggle":
+          p.toggle();
+          break;
+        case "play":
+          if (p.status !== "playing") p.toggle();
+          break;
+        case "pause":
+          if (p.status === "playing") p.toggle();
+          break;
+        case "next":
+          p.next();
+          break;
+        case "prev":
+          p.prev();
+          break;
+        case "seekForward":
+          p.seek(Math.min(p.duration, p.position + 10));
+          break;
+        case "seekBackward":
+          p.seek(Math.max(0, p.position - 10));
+          break;
+      }
+    };
+    return () => {
+      delete host.__amusicRemoteKey;
+    };
+  }, []);
+
   useEffect(() => {
     void loadLibrary();
   }, [loadLibrary]);

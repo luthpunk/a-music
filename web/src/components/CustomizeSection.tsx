@@ -60,16 +60,21 @@ export function AccentPicker() {
 
 function SwitchRow({ label, body, checked, onChange }: { label: string; body?: string; checked: boolean; onChange: (on: boolean) => void }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5">
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-surface-2"
+    >
       <span>
         <span className="block text-sm font-medium">{label}</span>
         {body && <span className="block text-xs text-fg-2">{body}</span>}
       </span>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
       <span
         aria-hidden="true"
         className={cn(
-          "relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200 peer-focus-visible:outline-2 peer-focus-visible:outline-accent",
+          "relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200",
           checked ? "bg-accent" : "bg-surface-4",
         )}
       >
@@ -80,7 +85,7 @@ function SwitchRow({ label, body, checked, onChange }: { label: string; body?: s
           )}
         />
       </span>
-    </label>
+    </button>
   );
 }
 

@@ -200,6 +200,8 @@ export function PanelDrawer() {
         <div className="fixed inset-0 z-40 hidden md:block xl:hidden">
           <motion.div className="absolute inset-0 bg-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} />
           <motion.aside
+            role="dialog"
+            aria-modal="true"
             aria-label={t.nowPlaying.panel}
             data-escape-closes
             initial={reduce ? { opacity: 0 } : { x: "105%" }}

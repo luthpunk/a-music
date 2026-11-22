@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name" translatable="false">A Music</string>
     <string name="title_activity_main" translatable="false">A Music</string>
-    <string name="package_name" translatable="false">app.musike.android</string>
-    <string name="custom_url_scheme" translatable="false">app.musike.android</string>
+    <string name="package_name" translatable="false">app.amusic.android</string>
+    <string name="custom_url_scheme" translatable="false">app.amusic.android</string>
     <string name="playback_channel">Playback</string>
     <string name="playback_play">Play</string>
     <string name="playback_pause">Pause</string>

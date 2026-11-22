@@ -1,9 +1,10 @@
 /* Android TV (10-foot) tweaks. Loaded only when html[data-tv="1"] is set. */
 
 html[data-tv="1"] {
-  --tv-ring: #b6f36a;
-  --tv-ring-soft: rgba(182, 243, 106, 0.35);
-  font-size: 130%;
+  --tv-ring: var(--accent, #c3ec52);
+  --tv-ring-soft: color-mix(in srgb, var(--tv-ring) 35%, transparent);
+  /* Responsive 10-foot scale: crisp on both 960x540 (2x DPR 1080p TV) and 1920x1080 (1x DPR). */
+  font-size: clamp(15px, 1.35vw, 20px);
   scroll-behavior: smooth;
 }
 
@@ -13,15 +14,28 @@ html[data-tv="1"] body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Safe overscan margin so edges and focus rings never clip on TV bezels. */
+html[data-tv="1"] #root > div {
+  padding: 14px 22px !important;
+  gap: 10px !important;
+}
+
 /* One clear, animated focus ring. */
 html[data-tv="1"] :focus {
   outline: 3px solid var(--tv-ring) !important;
   outline-offset: 2px !important;
   border-radius: 14px;
-  box-shadow: 0 0 0 6px var(--tv-ring-soft), 0 18px 40px rgba(0, 0, 0, 0.45) !important;
-  transform: scale(1.035);
+  box-shadow: 0 0 0 6px var(--tv-ring-soft), 0 14px 32px rgba(0, 0, 0, 0.45) !important;
+  transform: scale(1.025);
   transition: transform 130ms ease-out, box-shadow 130ms ease-out, outline-color 130ms ease-out;
   z-index: 3;
+}
+
+html[data-tv="1"] [role="slider"]:focus,
+html[data-tv="1"] input:focus,
+html[data-tv="1"] li button:focus {
+  transform: none;
+  box-shadow: 0 0 0 4px var(--tv-ring-soft) !important;
 }
 
 html[data-tv="1"] *:hover {
@@ -33,30 +47,50 @@ html[data-tv="1"] ::-webkit-scrollbar {
   height: 0;
 }
 
-/* ---- left rail (sidebar) -------------------------------------------------
-   The rail is a fixed 78px column: icons must stay square, centred and never
-   overlap, so the global min-size rules are undone here. */
-html[data-tv="1"] aside.island {
-  min-width: 84px !important;
-  width: 84px !important;
+html[data-tv="1"] .scroll-area,
+html[data-tv="1"] .no-scrollbar {
+  scroll-padding: 76px 36px 36px 36px;
 }
 
-html[data-tv="1"] aside.island > div {
+/* Hide desktop-only keyboard shortcut hints on TV. */
+html[data-tv="1"] .kbd,
+html[data-tv="1"] [data-tv-hide] {
+  display: none !important;
+}
+
+/* ---- Reveal hover-only action buttons on TV so D-pad can reach them ------ */
+html[data-tv="1"] [data-tv-action] {
+  display: grid !important;
+  opacity: 0.72 !important;
+}
+
+html[data-tv="1"] [data-tv-action]:focus {
+  opacity: 1 !important;
+}
+
+/* ---- left rail (sidebar) -------------------------------------------------
+   The rail is a fixed column: icons stay square, centred and never overlap. */
+html[data-tv="1"] aside.island:first-child {
+  min-width: 82px !important;
+  width: 82px !important;
+}
+
+html[data-tv="1"] aside.island:first-child > div {
   padding-block: 6px;
 }
 
-html[data-tv="1"] aside.island nav {
+html[data-tv="1"] aside.island:first-child nav {
   gap: 8px !important;
-  padding-inline: 12px !important;
+  padding-inline: 10px !important;
 }
 
-html[data-tv="1"] aside.island button,
-html[data-tv="1"] aside.island a {
+html[data-tv="1"] aside.island:first-child button,
+html[data-tv="1"] aside.island:first-child a {
   min-width: 0 !important;
   min-height: 0 !important;
   width: 100% !important;
-  height: 46px !important;
-  padding: 0 !important;
+  height: 48px !important;
+  padding: 2px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -64,22 +98,27 @@ html[data-tv="1"] aside.island a {
   border-radius: 14px;
 }
 
-html[data-tv="1"] aside.island button svg,
-html[data-tv="1"] aside.island a svg {
+html[data-tv="1"] aside.island:first-child a > span:first-child {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+html[data-tv="1"] aside.island:first-child button svg,
+html[data-tv="1"] aside.island:first-child a svg {
   width: 22px !important;
   height: 22px !important;
   flex: none;
 }
 
 /* The rail never scales on focus: a lifted row would touch its neighbours. */
-html[data-tv="1"] aside.island :focus {
+html[data-tv="1"] aside.island:first-child :focus {
   transform: none;
   box-shadow: 0 0 0 3px var(--tv-ring-soft) !important;
   outline-offset: 0 !important;
 }
 
 /* logo mark */
-html[data-tv="1"] aside.island .size-8 {
+html[data-tv="1"] aside.island:first-child .size-8 {
   width: 26px !important;
   height: 26px !important;
 }
@@ -88,13 +127,13 @@ html[data-tv="1"] aside.island .size-8 {
 html[data-tv="1"] main button,
 html[data-tv="1"] main [role="button"],
 html[data-tv="1"] main a[href] {
-  min-width: 48px;
-  min-height: 48px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 html[data-tv="1"] ul,
 html[data-tv="1"] ol {
-  row-gap: 10px;
+  row-gap: 8px;
 }
 
 html[data-tv="1"] li {
@@ -120,8 +159,8 @@ html[data-tv="1"] input[type="text"] {
    On TV a sheet is a centred panel with its own scrolling; navigation is
    trapped inside it by tvMode.ts while it is open. */
 html[data-tv="1"] [role="dialog"] {
-  max-width: min(1100px, 78vw) !important;
-  max-height: 80vh !important;
+  max-width: min(980px, 80vw) !important;
+  max-height: 82vh !important;
   overflow-y: auto !important;
   border-radius: 22px !important;
   margin: auto !important;
@@ -129,12 +168,13 @@ html[data-tv="1"] [role="dialog"] {
 }
 
 html[data-tv="1"] [role="dialog"] h2 {
-  font-size: 1.35em;
+  font-size: 1.25em;
 }
 
 html[data-tv="1"] [role="dialog"] li,
 html[data-tv="1"] [role="dialog"] button,
-html[data-tv="1"] [role="dialog"] [role="radio"] {
+html[data-tv="1"] [role="dialog"] [role="radio"],
+html[data-tv="1"] [role="dialog"] [role="switch"] {
   border-radius: 14px;
 }
 

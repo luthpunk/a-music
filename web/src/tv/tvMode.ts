@@ -5,18 +5,23 @@
  * time, or by opening the app with ?tv=1 (handy for trying it in a browser). Everywhere else it stays off.
  *
  * Rules: geometry in document space (rails stay navigable when an item is scrolled out), candidates
- * overlapping the current element on the other axis win, the nearest scrollable ancestor is scrolled
+ * overlapping the current element on the other axis win, every scrollable ancestor is scrolled
  * just enough to reveal the target, and key auto-repeat is throttled so a held arrow moves one step.
  */
 
 const FOCUSABLE = [
   "button:not([disabled])",
   "a[href]",
-  "input:not([disabled])",
+  "input:not([disabled]):not([type='hidden']):not([type='file']):not([type='color'])",
   "select:not([disabled])",
   "textarea:not([disabled])",
   '[tabindex]:not([tabindex="-1"])',
   '[role="button"]',
+  '[role="switch"]',
+  '[role="radio"]',
+  '[role="checkbox"]',
+  '[role="tab"]',
+  '[role="menuitem"]',
   '[role="slider"]',
   "[data-tv-focusable]",
 ].join(",");
@@ -54,9 +59,15 @@ function activeDialog(): HTMLElement | null {
   return nodes.length ? nodes[nodes.length - 1] : null;
 }
 
-function focusables(): HTMLElement[] {
-  const scope: ParentNode = activeDialog() ?? document;
+function focusables(scope: ParentNode = activeDialog() ?? document): HTMLElement[] {
   return Array.from(scope.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(shown);
+}
+
+function isTextInput(el: HTMLElement | null): el is HTMLInputElement | HTMLTextAreaElement {
+  if (!el) return false;
+  if (el.isContentEditable) return true;
+  if (el instanceof HTMLTextAreaElement) return true;
+  return el instanceof HTMLInputElement && /^(text|search|email|password|url|tel)$/.test(el.type);
 }
 
 function box(el: HTMLElement) {
@@ -71,34 +82,46 @@ function box(el: HTMLElement) {
   };
 }
 
-function scrollableAncestor(el: HTMLElement): HTMLElement | null {
+function scrollableAncestors(el: HTMLElement): HTMLElement[] {
+  const result: HTMLElement[] = [];
   let node = el.parentElement;
   while (node && node !== document.body) {
     const s = getComputedStyle(node);
     const canY = /(auto|scroll|overlay)/.test(s.overflowY) && node.scrollHeight > node.clientHeight + 4;
     const canX = /(auto|scroll|overlay)/.test(s.overflowX) && node.scrollWidth > node.clientWidth + 4;
-    if (canX || canY) return node;
+    if (canX || canY) result.push(node);
     node = node.parentElement;
   }
-  return null;
+  return result;
 }
 
 function reveal(el: HTMLElement) {
-  const scroller = scrollableAncestor(el);
-  if (!scroller) {
+  const scrollers = scrollableAncestors(el);
+  if (!scrollers.length) {
     el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     return;
   }
-  const s = scroller.getBoundingClientRect();
-  const r = el.getBoundingClientRect();
-  const margin = 24;
-  let dx = 0;
-  let dy = 0;
-  if (r.left < s.left + margin) dx = r.left - s.left - margin;
-  else if (r.right > s.right - margin) dx = r.right - s.right + margin;
-  if (r.top < s.top + margin) dy = r.top - s.top - margin;
-  else if (r.bottom > s.bottom - margin) dy = r.bottom - s.bottom + margin;
-  if (dx || dy) scroller.scrollBy({ left: dx, top: dy, behavior: "smooth" });
+  for (const scroller of scrollers) {
+    const s = scroller.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const style = getComputedStyle(scroller);
+    const canY = /(auto|scroll|overlay)/.test(style.overflowY) && scroller.scrollHeight > scroller.clientHeight + 4;
+    const canX = /(auto|scroll|overlay)/.test(style.overflowX) && scroller.scrollWidth > scroller.clientWidth + 4;
+    const marginX = 36;
+    const marginTop = scroller.tagName === "MAIN" ? 84 : 36;
+    const marginBottom = 36;
+    let dx = 0;
+    let dy = 0;
+    if (canX) {
+      if (r.left < s.left + marginX) dx = r.left - s.left - marginX;
+      else if (r.right > s.right - marginX) dx = r.right - s.right + marginX;
+    }
+    if (canY) {
+      if (r.top < s.top + marginTop) dy = r.top - s.top - marginTop;
+      else if (r.bottom > s.bottom - marginBottom) dy = r.bottom - s.bottom + marginBottom;
+    }
+    if (dx || dy) scroller.scrollBy({ left: dx, top: dy, behavior: "smooth" });
+  }
 }
 
 function move(direction: "left" | "right" | "up" | "down"): boolean {
@@ -149,32 +172,82 @@ function move(direction: "left" | "right" | "up" | "down"): boolean {
 function activate(): boolean {
   const el = document.activeElement;
   if (!(el instanceof HTMLElement) || el === document.body) return false;
-  if (el instanceof HTMLInputElement && /^(text|search|email|password)$/.test(el.type)) return false;
+  if (isTextInput(el)) return false;
   el.click();
   return true;
 }
 
+function pickInitialTarget(scope?: ParentNode): HTMLElement | null {
+  if (scope) {
+    const els = focusables(scope);
+    if (!els.length) return null;
+    // Prefer an autofocus input, or skip the header close-X button when the dialog has real controls.
+    const auto = els.find((e) => e.hasAttribute("autofocus"));
+    if (auto) return auto;
+    if (els.length > 1 && els[0].closest("[role='dialog']") && /close|fechar/i.test(els[0].getAttribute("aria-label") ?? "")) {
+      return els[1];
+    }
+    return els[0];
+  }
+  const main = document.querySelector("main");
+  if (main) {
+    const mainEls = focusables(main);
+    if (mainEls.length) return mainEls[0];
+  }
+  return focusables()[0] ?? null;
+}
+
 let lastOutside: HTMLElement | null = null;
 
-/** Focus the first control of a freshly opened dialog, and put focus back when it closes. */
+/** Focus the first control of a freshly opened dialog, put focus back when it closes, and recover lost focus. */
 function watchDialogs() {
   let current: HTMLElement | null = null;
+  let recoveryRaf = 0;
+
+  const scheduleRecovery = () => {
+    if (recoveryRaf) return;
+    recoveryRaf = requestAnimationFrame(() => {
+      recoveryRaf = 0;
+      const dialog = activeDialog();
+      const active = document.activeElement;
+      if (dialog) {
+        if (!(active instanceof HTMLElement) || !dialog.contains(active) || !shown(active)) {
+          const target = pickInitialTarget(dialog);
+          if (target) target.focus({ preventScroll: true });
+        }
+        return;
+      }
+      if (!active || active === document.body || !(active instanceof HTMLElement) || !document.contains(active)) {
+        const target = pickInitialTarget();
+        if (target) target.focus({ preventScroll: true });
+      }
+    });
+  };
+
   const sync = () => {
     const dialog = activeDialog();
-    if (dialog === current) return;
-    if (dialog) {
-      lastOutside = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      current = dialog;
-      window.setTimeout(() => {
-        const first = focusables()[0];
-        if (first) first.focus({ preventScroll: true });
-      }, 60);
-    } else {
-      current = null;
-      if (lastOutside && document.contains(lastOutside)) lastOutside.focus({ preventScroll: true });
-      lastOutside = null;
+    if (dialog !== current) {
+      if (dialog) {
+        lastOutside = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        current = dialog;
+        window.setTimeout(() => {
+          const target = pickInitialTarget(dialog);
+          if (target) target.focus({ preventScroll: true });
+        }, 70);
+      } else {
+        current = null;
+        if (lastOutside && document.contains(lastOutside) && shown(lastOutside)) {
+          lastOutside.focus({ preventScroll: true });
+        } else {
+          scheduleRecovery();
+        }
+        lastOutside = null;
+      }
+      return;
     }
+    scheduleRecovery();
   };
+
   new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
   sync();
 }
@@ -190,9 +263,9 @@ export function installTvMode() {
     "keydown",
     (event) => {
       const target = event.target as HTMLElement | null;
-      const typing =
-        target instanceof HTMLElement &&
-        (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      const inText = isTextInput(target);
+      const inSelect = target instanceof HTMLSelectElement;
+      const inSlider = target instanceof HTMLElement && target.getAttribute("role") === "slider";
       const key = event.key;
       const handled = () => {
         event.preventDefault();
@@ -200,7 +273,26 @@ export function installTvMode() {
       };
 
       if (key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown") {
-        if (typing) return;
+        if (inSelect) return;
+
+        // Sliders (scrubber / volume): Left & Right adjust the slider; Up & Down always escape spatially.
+        if (inSlider && (key === "ArrowLeft" || key === "ArrowRight")) return;
+
+        // Text inputs: Up/Down always escape single-line inputs; Left/Right escape at text boundaries.
+        if (inText) {
+          if (target instanceof HTMLTextAreaElement || target.isContentEditable) return;
+          if (key === "ArrowLeft") {
+            const start = target.selectionStart ?? 0;
+            const end = target.selectionEnd ?? 0;
+            if (start > 0 || end > 0) return;
+          } else if (key === "ArrowRight") {
+            const len = target.value.length;
+            const start = target.selectionStart ?? len;
+            const end = target.selectionEnd ?? len;
+            if (start < len || end < len) return;
+          }
+        }
+
         const now = performance.now();
         if (event.repeat && now - lastMove < REPEAT_MS) {
           handled();
@@ -213,7 +305,7 @@ export function installTvMode() {
 
       if (key === "Escape" || key === "BrowserBack" || key === "GoBack") {
         // A dialog or a menu is open: the app's own Escape handler closes it (and nothing else).
-        const overlay = [...document.querySelectorAll<HTMLElement>("[data-escape-closes]")].some(shown);
+        const overlay = [...document.querySelectorAll<HTMLElement>("[data-escape-closes]")].some(present);
         if (activeDialog() || overlay) return;
         if (window.history.length > 1) {
           handled();
@@ -222,8 +314,10 @@ export function installTvMode() {
         return;
       }
 
-      if ((key === "Enter" || key === " ") && !typing) {
-        if (document.activeElement instanceof HTMLButtonElement) return;
+      if ((key === "Enter" || key === " ") && !inText && !inSelect) {
+        const active = document.activeElement;
+        if (key === "Enter" && (active instanceof HTMLButtonElement || active instanceof HTMLAnchorElement)) return;
+        if (key === " " && active instanceof HTMLButtonElement) return;
         if (activate()) handled();
       }
     },
@@ -233,8 +327,10 @@ export function installTvMode() {
   watchDialogs();
 
   const focusFirst = () => {
-    const els = focusables();
-    if (document.activeElement === document.body && els.length) els[0].focus({ preventScroll: true });
+    if (document.activeElement === document.body) {
+      const target = pickInitialTarget();
+      if (target) target.focus({ preventScroll: true });
+    }
   };
   window.setTimeout(focusFirst, 350);
 }

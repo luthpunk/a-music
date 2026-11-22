@@ -1,5 +1,6 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { cn } from "../lib/format";
+import { isTvMode } from "../tv/tvMode";
 
 interface Props {
   value: number;
@@ -67,7 +68,9 @@ export function Slider({
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const s = step ?? max / 20;
+    const tv = isTvMode();
+    if (tv && (e.key === "ArrowUp" || e.key === "ArrowDown")) return;
+    const s = tv && max > 20 ? Math.max(step ?? max / 20, 10) : (step ?? max / 20);
     const map: Record<string, number> = {
       ArrowRight: value + s,
       ArrowUp: value + s,
@@ -112,7 +115,7 @@ export function Slider({
       <div
         className={cn(
           "pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fg shadow-[0_1px_4px_rgb(0_0_0/0.4)] transition-opacity",
-          showThumb || drag !== null ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100",
+          showThumb || drag !== null ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100",
         )}
         style={{ left: `${pct}%` }}
       />

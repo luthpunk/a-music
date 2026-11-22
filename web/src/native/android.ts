@@ -18,10 +18,12 @@ if (Capacitor.isNativePlatform()) {
     })
     .catch(() => {});
 
-  // Back closes what's on top (a dialog, a menu), then goes back through pages, then sends the app to the
+  // Back closes what's on top (a dialog, a menu, theater), then goes back through pages, then sends the app to the
   // background, where the music keeps playing.
   void App.addListener("backButton", () => {
-    const overlay = [...document.querySelectorAll("[data-escape-closes]")].some((el) => el.getClientRects().length > 0);
+    const overlay = [
+      ...document.querySelectorAll('[data-escape-closes], [role="dialog"], [aria-modal="true"], [role="menu"]'),
+    ].some((el) => el.getClientRects().length > 0);
     if (overlay) {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
       return;

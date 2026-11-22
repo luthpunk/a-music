@@ -72,6 +72,7 @@ export function VideoSlot({
       {expandable && (
         <button
           type="button"
+          data-tv-action
           onClick={openTheater}
           aria-label={t.video.maximize}
           title={t.video.maximizeKey}
@@ -209,6 +210,7 @@ export function Theater() {
           ref={box}
           role="dialog"
           aria-modal="true"
+          data-escape-closes
           aria-label={t.video.label(track.title)}
           initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}

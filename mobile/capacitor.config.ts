@@ -5,7 +5,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const serverUrl = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.MUSIKE_SERVER_URL;
 
 const config: CapacitorConfig = {
-  appId: "app.musike.android",
+  appId: "app.amusic.android",
   appName: "A Music",
   // The web app built in Android mode: same UI, backend running on the phone (see web/src/native).
   webDir: "../web/dist-native",

@@ -14,15 +14,20 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "MusikeDevice")
 public class MusikeDevicePlugin extends Plugin {
 
+    static boolean isTvDevice(Context context) {
+        UiModeManager uiMode = (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
+        PackageManager pm = context.getPackageManager();
+        return (
+            (uiMode != null && uiMode.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) ||
+            pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
+            !pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+        );
+    }
+
     @PluginMethod
     public void info(PluginCall call) {
-        Context context = getContext();
-        UiModeManager uiMode = (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
-        boolean tv =
-            (uiMode != null && uiMode.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) ||
-            context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
         JSObject result = new JSObject();
-        result.put("tv", tv);
+        result.put("tv", isTvDevice(getContext()));
         call.resolve(result);
     }
 }

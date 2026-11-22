@@ -37,48 +37,49 @@ const TrackRow = memo(function TrackRow({ track, position, onPlay, playlistId, s
   return (
     <li
       onContextMenu={menuAt}
-      className={cn(
-        "group relative grid items-center gap-3 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-surface-2 md:px-3",
-        showAlbum
-          ? "grid-cols-[auto_1fr_auto] md:grid-cols-[28px_auto_1fr_auto_auto] lg:grid-cols-[28px_auto_minmax(0,1.4fr)_minmax(0,1fr)_auto_auto]"
-          : "grid-cols-[auto_1fr_auto] md:grid-cols-[28px_auto_1fr_auto_auto]",
-      )}
+      className="group relative flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-surface-2 md:gap-3 md:px-3"
     >
       <button
         type="button"
         onClick={onPlay}
         aria-label={t.common.playX(track.title)}
-        className="absolute inset-0 rounded-xl focus-visible:outline-offset-[-2px]"
-      />
-
-      <span className="pointer-events-none hidden justify-center font-mono text-[13px] text-fg-3 tabular-nums md:flex">
-        {isCurrent ? <Equalizer live={isPlaying} /> : position + 1}
-      </span>
-
-      <div className="pointer-events-none relative">
-        <Artwork src={track.thumb} className="size-11 rounded-[10px]" />
-        {isCurrent && (
-          <span className="absolute inset-0 grid place-items-center rounded-[10px] bg-black/45 md:hidden">
-            <Equalizer live={isPlaying} />
-          </span>
+        className={cn(
+          "grid min-w-0 flex-1 items-center gap-3 rounded-xl text-left focus-visible:outline-offset-[-2px]",
+          showAlbum
+            ? "grid-cols-[auto_1fr] md:grid-cols-[28px_auto_1fr] lg:grid-cols-[28px_auto_minmax(0,1.4fr)_minmax(0,1fr)]"
+            : "grid-cols-[auto_1fr] md:grid-cols-[28px_auto_1fr]",
         )}
-      </div>
+      >
+        <span className="hidden justify-center font-mono text-[13px] text-fg-3 tabular-nums md:flex">
+          {isCurrent ? <Equalizer live={isPlaying} /> : position + 1}
+        </span>
 
-      <div className="pointer-events-none min-w-0">
-        <p className={cn("truncate text-[15px] leading-tight font-medium", isCurrent ? "text-accent-text" : "text-fg")}>
-          {track.title}
-        </p>
-        <p className="mt-0.5 flex items-center gap-1.5 truncate text-[13px] text-fg-2">
-          {track.kind === "video" && <VideoCameraIcon size={13} className="shrink-0 text-fg-3" aria-label={t.common.video} />}
-          <span className="truncate">{track.artist || t.common.youtube}</span>
-        </p>
-      </div>
+        <span className="relative block">
+          <Artwork src={track.thumb} className="size-11 rounded-[10px]" />
+          {isCurrent && (
+            <span className="absolute inset-0 grid place-items-center rounded-[10px] bg-black/45 md:hidden">
+              <Equalizer live={isPlaying} />
+            </span>
+          )}
+        </span>
 
-      {showAlbum && <p className="pointer-events-none hidden truncate text-sm text-fg-2 lg:block">{track.album ?? ""}</p>}
+        <span className="min-w-0">
+          <span className={cn("block truncate text-[15px] leading-tight font-medium", isCurrent ? "text-accent-text" : "text-fg")}>
+            {track.title}
+          </span>
+          <span className="mt-0.5 flex items-center gap-1.5 truncate text-[13px] text-fg-2">
+            {track.kind === "video" && <VideoCameraIcon size={13} className="shrink-0 text-fg-3" aria-label={t.common.video} />}
+            <span className="truncate">{track.artist || t.common.youtube}</span>
+          </span>
+        </span>
 
-      <div className="relative z-10 hidden items-center gap-1 md:flex">
+        {showAlbum && <span className="hidden truncate text-sm text-fg-2 lg:block">{track.album ?? ""}</span>}
+      </button>
+
+      <div className="relative z-10 hidden shrink-0 items-center gap-1 md:flex">
         <button
           type="button"
+          data-tv-action
           onClick={() => void toggleFavorite(track)}
           aria-label={isFavorite ? t.common.removeFromFavorites : t.common.addToFavorites}
           title={isFavorite ? t.common.removeFromFavorites : t.common.addToFavorites}
@@ -96,10 +97,11 @@ const TrackRow = memo(function TrackRow({ track, position, onPlay, playlistId, s
 
       <button
         type="button"
+        data-tv-action
         onClick={menuAt}
         aria-label={t.trackList.moreFor(track.title)}
         title={t.trackList.more}
-        className="relative z-10 grid size-9 place-items-center rounded-full text-fg-2 transition-[opacity,background-color] hover:bg-surface-3 hover:text-fg md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+        className="relative z-10 grid size-9 shrink-0 place-items-center rounded-full text-fg-2 transition-[opacity,background-color] hover:bg-surface-3 hover:text-fg md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
       >
         <DotsThreeIcon size={22} weight="bold" />
       </button>

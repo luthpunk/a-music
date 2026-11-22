@@ -23,6 +23,7 @@ import { cn } from "../lib/format";
 import { paths } from "../lib/routes";
 import type { AlbumCard, Track } from "../lib/types";
 import { usePlayer } from "../player/player";
+import { isTvMode } from "../tv/tvMode";
 import { parseList } from "./BatchSearch";
 
 const RECENT_KEY = "musike:recent-searches";
@@ -173,7 +174,7 @@ export default function Search() {
   }, [linkId]);
 
   useEffect(() => {
-    if (isMd && !q) input.current?.focus();
+    if (isMd && !q && !isTvMode()) input.current?.focus();
   }, []);
 
   const tab = (k: Kind, label: string) => (

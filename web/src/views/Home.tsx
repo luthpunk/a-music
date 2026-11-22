@@ -16,13 +16,15 @@ function Shortcut({ to, label, tracks, cover }: { to: string; label: string; tra
   const playList = usePlayer((s) => s.playList);
   const t = useT();
   return (
-    <div className="group relative flex h-14 items-center gap-3 overflow-hidden rounded-[12px] bg-surface-2 pr-2 transition-colors hover:bg-surface-3 md:h-16">
-      <Link to={to} className="absolute inset-0" aria-label={label} />
-      <span className="pointer-events-none size-14 shrink-0 overflow-hidden md:size-16">{cover}</span>
-      <span className="pointer-events-none min-w-0 flex-1 truncate text-[13px] font-semibold md:text-sm">{label}</span>
+    <div className="group relative flex h-14 items-center gap-2 overflow-hidden rounded-[12px] bg-surface-2 pr-2 transition-colors hover:bg-surface-3 md:h-16">
+      <Link to={to} className="flex h-full min-w-0 flex-1 items-center gap-3" aria-label={label}>
+        <span className="size-14 shrink-0 overflow-hidden md:size-16">{cover}</span>
+        <span className="min-w-0 flex-1 truncate text-[13px] font-semibold md:text-sm">{label}</span>
+      </Link>
       {tracks.length > 0 && (
         <button
           type="button"
+          data-tv-action
           onClick={() => playList(tracks, 0)}
           aria-label={t.common.playX(label)}
           className="relative z-10 hidden size-10 shrink-0 place-items-center rounded-full bg-accent text-accent-ink opacity-0 shadow-[0_6px_18px_rgb(0_0_0/0.35)] transition-[opacity,transform] duration-200 ease-out-expo group-hover:opacity-100 hover:scale-105 active:scale-95 md:grid"

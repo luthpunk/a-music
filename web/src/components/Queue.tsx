@@ -34,26 +34,33 @@ export function QueueList({ compact = false }: { compact?: boolean }) {
   const row = (i: number, isCurrent: boolean) => {
     const track = queue[i];
     return (
-      <li key={`${track.id}-${i}`} className="group relative flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-surface-3">
-        <button type="button" onClick={() => jumpTo(i)} className="absolute inset-0 rounded-xl" aria-label={t.common.playX(track.title)} />
-        <Artwork src={track.thumb} className="pointer-events-none size-10 rounded-[8px]" />
-        <div className="pointer-events-none min-w-0 flex-1">
-          <p className={cn("truncate text-sm font-medium", isCurrent ? "text-accent-text" : "text-fg")}>{track.title}</p>
-          <p className="truncate text-xs text-fg-2">{track.artist}</p>
-        </div>
+      <li key={`${track.id}-${i}`} className="group relative flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-surface-3">
+        <button
+          type="button"
+          onClick={() => jumpTo(i)}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left"
+          aria-label={t.common.playX(track.title)}
+        >
+          <Artwork src={track.thumb} className="size-10 shrink-0 rounded-[8px]" />
+          <span className="min-w-0 flex-1">
+            <span className={cn("block truncate text-sm font-medium", isCurrent ? "text-accent-text" : "text-fg")}>{track.title}</span>
+            <span className="block truncate text-xs text-fg-2">{track.artist}</span>
+          </span>
+        </button>
         {isCurrent ? (
-          <Equalizer live={live} className="mr-2" />
+          <Equalizer live={live} className="mr-2 shrink-0" />
         ) : (
           <>
-            <span className="pointer-events-none font-mono text-xs text-fg-3 tabular-nums group-hover:hidden">
+            <span className="pointer-events-none shrink-0 font-mono text-xs text-fg-3 tabular-nums group-hover:hidden">
               {track.duration ? formatTime(track.duration) : ""}
             </span>
             <button
               type="button"
+              data-tv-action
               onClick={() => removeAt(i)}
               aria-label={t.queue.removeX(track.title)}
               title={t.queue.remove}
-              className="relative z-10 hidden size-8 place-items-center rounded-full text-fg-2 hover:bg-surface-4 hover:text-fg group-hover:grid max-md:grid"
+              className="relative z-10 hidden size-8 shrink-0 place-items-center rounded-full text-fg-2 hover:bg-surface-4 hover:text-fg group-hover:grid max-md:grid"
             >
               <XIcon size={16} />
             </button>
@@ -90,21 +97,21 @@ export function QueueList({ compact = false }: { compact?: boolean }) {
         )}
       </section>
 
-      <label className="mx-2 flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-surface-1 px-3 py-2.5 ring-1 ring-line">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={autoRadio}
+        onClick={() => setAutoRadio(!autoRadio)}
+        className="mx-2 flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-surface-1 px-3 py-2.5 text-left ring-1 ring-line transition-colors hover:bg-surface-3"
+      >
         <span>
           <span className="block text-sm font-medium">{t.queue.autoRadio}</span>
           <span className="block text-xs text-fg-2">{t.queue.autoRadioBody}</span>
         </span>
-        <input
-          type="checkbox"
-          checked={autoRadio}
-          onChange={(e) => setAutoRadio(e.target.checked)}
-          className="peer sr-only"
-        />
         <span
           aria-hidden="true"
           className={cn(
-            "relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200 peer-focus-visible:outline-2 peer-focus-visible:outline-accent",
+            "relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200",
             autoRadio ? "bg-accent" : "bg-surface-4",
           )}
         >
@@ -115,7 +122,7 @@ export function QueueList({ compact = false }: { compact?: boolean }) {
             )}
           />
         </span>
-      </label>
+      </button>
     </div>
   );
 }

@@ -69,7 +69,7 @@ export function PlayerBar() {
             <SidebarSimpleIcon size={18} mirrored />
           </IconButton>
           <Volume className="max-lg:hidden" />
-          <IconButton label={t.player.shortcuts} size="sm" onClick={() => setShortcutsOpen(true)} className="max-xl:hidden">
+          <IconButton label={t.player.shortcuts} size="sm" onClick={() => setShortcutsOpen(true)} className="max-xl:hidden" data-tv-hide>
             <KeyboardIcon size={18} />
           </IconButton>
         </div>
