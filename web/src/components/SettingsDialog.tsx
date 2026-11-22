@@ -87,7 +87,7 @@ export function SettingsDialog() {
   const setLang = useI18n((s) => s.setLang);
 
   useEffect(() => {
-    if (open) void load();
+    if (open && capabilities.engineSettings) void load();
   }, [open, load]);
 
   useEffect(() => {

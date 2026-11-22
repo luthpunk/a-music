@@ -66,8 +66,8 @@ function focusables(scope: ParentNode = activeDialog() ?? document): HTMLElement
 function isTextInput(el: HTMLElement | null): el is HTMLInputElement | HTMLTextAreaElement {
   if (!el) return false;
   if (el.isContentEditable) return true;
-  if (el instanceof HTMLTextAreaElement) return true;
-  return el instanceof HTMLInputElement && /^(text|search|email|password|url|tel)$/.test(el.type);
+  if (el instanceof HTMLTextAreaElement) return !el.readOnly;
+  return el instanceof HTMLInputElement && !el.readOnly && /^(text|search|email|password|url|tel)$/.test(el.type);
 }
 
 function box(el: HTMLElement) {
@@ -230,10 +230,10 @@ function watchDialogs() {
       if (dialog) {
         lastOutside = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         current = dialog;
-        window.setTimeout(() => {
+        requestAnimationFrame(() => {
           const target = pickInitialTarget(dialog);
           if (target) target.focus({ preventScroll: true });
-        }, 70);
+        });
       } else {
         current = null;
         if (lastOutside && document.contains(lastOutside) && shown(lastOutside)) {

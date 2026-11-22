@@ -14,20 +14,32 @@ html[data-tv="1"] body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Disable heavy GPU effects (fullscreen SVG noise & backdrop blur) on Android TV for smooth 60fps transitions. */
+html[data-tv="1"] .grain::after {
+  display: none !important;
+}
+
+html[data-tv="1"] header,
+html[data-tv="1"] .backdrop-blur-xl,
+html[data-tv="1"] .backdrop-blur-md {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* Safe overscan margin so edges and focus rings never clip on TV bezels. */
 html[data-tv="1"] #root > div {
   padding: 14px 22px !important;
   gap: 10px !important;
 }
 
-/* One clear, animated focus ring. */
+/* One clear, lightweight focus ring. */
 html[data-tv="1"] :focus {
   outline: 3px solid var(--tv-ring) !important;
   outline-offset: 2px !important;
   border-radius: 14px;
-  box-shadow: 0 0 0 6px var(--tv-ring-soft), 0 14px 32px rgba(0, 0, 0, 0.45) !important;
-  transform: scale(1.025);
-  transition: transform 130ms ease-out, box-shadow 130ms ease-out, outline-color 130ms ease-out;
+  box-shadow: 0 0 0 4px var(--tv-ring-soft) !important;
+  transform: scale(1.02);
+  transition: transform 110ms ease-out, box-shadow 110ms ease-out, outline-color 110ms ease-out;
   z-index: 3;
 }
 
@@ -35,7 +47,7 @@ html[data-tv="1"] [role="slider"]:focus,
 html[data-tv="1"] input:focus,
 html[data-tv="1"] li button:focus {
   transform: none;
-  box-shadow: 0 0 0 4px var(--tv-ring-soft) !important;
+  box-shadow: 0 0 0 3px var(--tv-ring-soft) !important;
 }
 
 html[data-tv="1"] *:hover {
@@ -52,7 +64,7 @@ html[data-tv="1"] .no-scrollbar {
   scroll-padding: 76px 36px 36px 36px;
 }
 
-/* Hide desktop-only keyboard shortcut hints on TV. */
+/* Hide desktop-only hints and redundant sidebar shortcuts on TV. */
 html[data-tv="1"] .kbd,
 html[data-tv="1"] [data-tv-hide] {
   display: none !important;
@@ -69,18 +81,18 @@ html[data-tv="1"] [data-tv-action]:focus {
 }
 
 /* ---- left rail (sidebar) -------------------------------------------------
-   The rail is a fixed column: icons stay square, centred and never overlap. */
+   Clean TV navigation rail: Logo, Home, Search, Library, and Settings at bottom. */
 html[data-tv="1"] aside.island:first-child {
   min-width: 82px !important;
   width: 82px !important;
 }
 
 html[data-tv="1"] aside.island:first-child > div {
-  padding-block: 6px;
+  padding-block: 8px;
 }
 
 html[data-tv="1"] aside.island:first-child nav {
-  gap: 8px !important;
+  gap: 10px !important;
   padding-inline: 10px !important;
 }
 
@@ -89,8 +101,8 @@ html[data-tv="1"] aside.island:first-child a {
   min-width: 0 !important;
   min-height: 0 !important;
   width: 100% !important;
-  height: 48px !important;
-  padding: 2px !important;
+  height: 50px !important;
+  padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -98,15 +110,10 @@ html[data-tv="1"] aside.island:first-child a {
   border-radius: 14px;
 }
 
-html[data-tv="1"] aside.island:first-child a > span:first-child {
-  width: 40px !important;
-  height: 40px !important;
-}
-
 html[data-tv="1"] aside.island:first-child button svg,
 html[data-tv="1"] aside.island:first-child a svg {
-  width: 22px !important;
-  height: 22px !important;
+  width: 24px !important;
+  height: 24px !important;
   flex: none;
 }
 
@@ -114,13 +121,13 @@ html[data-tv="1"] aside.island:first-child a svg {
 html[data-tv="1"] aside.island:first-child :focus {
   transform: none;
   box-shadow: 0 0 0 3px var(--tv-ring-soft) !important;
-  outline-offset: 0 !important;
+  outline-offset: -1px !important;
 }
 
 /* logo mark */
 html[data-tv="1"] aside.island:first-child .size-8 {
-  width: 26px !important;
-  height: 26px !important;
+  width: 28px !important;
+  height: 28px !important;
 }
 
 /* ---- content ------------------------------------------------------------- */
@@ -155,16 +162,34 @@ html[data-tv="1"] input[type="text"] {
   padding-block: 0.6em;
 }
 
-/* ---- dialogs / sheets ----------------------------------------------------
-   On TV a sheet is a centred panel with its own scrolling; navigation is
-   trapped inside it by tvMode.ts while it is open. */
+/* ---- dialogs / sheets (Settings, Modals, Drawer) -------------------------
+   Smooth, lightweight GPU layer + inset-safe focus highlights so nothing clips left/right. */
 html[data-tv="1"] [role="dialog"] {
-  max-width: min(980px, 80vw) !important;
-  max-height: 82vh !important;
-  overflow-y: auto !important;
+  max-width: min(680px, 82vw) !important;
+  max-height: 84vh !important;
+  overflow: hidden !important;
   border-radius: 22px !important;
   margin: auto !important;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+html[data-tv="1"] [role="dialog"] .scroll-area {
+  margin-inline: 0 !important;
+  padding: 4px 8px 12px !important;
+  overflow-x: hidden !important;
+  scroll-padding: 24px 0 !important;
+}
+
+html[data-tv="1"] [role="dialog"] :focus {
+  transform: none !important;
+  outline: 2.5px solid var(--tv-ring) !important;
+  outline-offset: -2px !important;
+  box-shadow: inset 0 0 0 2px var(--tv-ring-soft) !important;
+}
+
+/* Color swatch circles keep an outer ring inside a padded row. */
+html[data-tv="1"] [role="dialog"] [role="radiogroup"] {
+  padding: 4px;
 }
 
 html[data-tv="1"] [role="dialog"] h2 {

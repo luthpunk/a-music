@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { MD, useMediaQuery } from "../hooks/useMediaQuery";
 import { useT } from "../i18n";
+import { isTvMode } from "../tv/tvMode";
 import { IconButton } from "./IconButton";
 
 /**
@@ -29,7 +30,11 @@ export function Modal({ open, onClose, title, children }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const from = reduce ? { opacity: 0 } : isMd ? { opacity: 0, scale: 0.96, y: 8 } : { y: "100%" };
+  const tv = isTvMode();
+  const from = reduce || tv ? { opacity: 0, y: tv ? 8 : 0 } : isMd ? { opacity: 0, scale: 0.96, y: 8 } : { y: "100%" };
+  const motionTransition = tv
+    ? { duration: 0.16, ease: [0.2, 0, 0, 1] as const }
+    : { type: "spring" as const, stiffness: 420, damping: 38 };
 
   return createPortal(
     <AnimatePresence>
@@ -40,6 +45,7 @@ export function Modal({ open, onClose, title, children }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={tv ? { duration: 0.14 } : undefined}
             onClick={onClose}
           />
           <motion.div
@@ -50,8 +56,8 @@ export function Modal({ open, onClose, title, children }: Props) {
             initial={from}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={from}
-            transition={{ type: "spring", stiffness: 420, damping: 38 }}
-            className="island safe-bottom relative w-full rounded-b-none md:mx-4 md:max-w-md md:rounded-[20px]"
+            transition={motionTransition}
+            className="island safe-bottom relative w-full rounded-b-none will-change-[opacity,transform] md:mx-4 md:max-w-md md:rounded-[20px]"
           >
             <div className="island-core p-4 md:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">

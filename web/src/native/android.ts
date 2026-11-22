@@ -3,12 +3,16 @@ import { Capacitor, registerPlugin, SystemBars, SystemBarsStyle } from "@capacit
 import { installTvMode } from "../tv/tvMode";
 
 /** MusikeDevicePlugin.java: what kind of device this is. */
-const Device = registerPlugin<{ info(): Promise<{ tv: boolean }> }>("MusikeDevice", {
-  web: () => ({ info: async () => ({ tv: false }) }),
+const Device = registerPlugin<{ info(): Promise<{ tv: boolean }>; showKeyboard(): Promise<void> }>("MusikeDevice", {
+  web: () => ({ info: async () => ({ tv: false }), showKeyboard: async () => {} }),
 });
 
 // How the app fits into Android itself: Android TV, the Back button and the system bars.
 if (Capacitor.isNativePlatform()) {
+  (globalThis as { __amusicShowKeyboard?: () => void }).__amusicShowKeyboard = () => {
+    void Device.showKeyboard().catch(() => {});
+  };
+
   // One APK for phones and TVs: on a TV, switch to the remote-friendly 10-foot UI (web/src/tv).
   void Device.info()
     .then(({ tv }) => {

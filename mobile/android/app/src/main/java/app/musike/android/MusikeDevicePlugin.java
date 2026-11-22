@@ -4,6 +4,8 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebView;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -29,5 +31,18 @@ public class MusikeDevicePlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("tv", isTvDevice(getContext()));
         call.resolve(result);
+    }
+
+    @PluginMethod
+    public void showKeyboard(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+            if (webView != null) {
+                webView.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.showSoftInput(webView, InputMethodManager.SHOW_IMPLICIT);
+            }
+            call.resolve();
+        });
     }
 }

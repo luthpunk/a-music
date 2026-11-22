@@ -77,9 +77,26 @@ export default function Search() {
   const [linkTrack, setLinkTrack] = useState<Track | "loading" | "error" | null>(null);
   const [retry, setRetry] = useState(0);
   const [genresOpen, setGenresOpenState] = useState(() => genresOpenMemo);
+  const [tvEditing, setTvEditing] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const isMd = useMediaQuery(MD);
   const playTrack = usePlayer((s) => s.playTrack);
+  const tv = isTvMode();
+
+  const activateTvSearchInput = () => {
+    const el = input.current;
+    if (!tv || !el || tvEditing) return;
+    // Flip readOnly synchronously inside the OK/click user gesture so Android TV opens the soft keyboard right away.
+    el.readOnly = false;
+    el.removeAttribute("readonly");
+    el.inputMode = "search";
+    el.blur();
+    el.focus();
+    setTvEditing(true);
+    window.setTimeout(() => {
+      (globalThis as { __amusicShowKeyboard?: () => void }).__amusicShowKeyboard?.();
+    }, 30);
+  };
 
   const linkId = videoIdFromUrl(text);
   // "a, b, c" probably means three songs; offer to search each one (titles can have commas, so only offer).
@@ -201,6 +218,7 @@ export default function Search() {
           role="search"
           onSubmit={(e) => {
             e.preventDefault();
+            if (tv) setTvEditing(false);
             input.current?.blur();
             if (!linkId) setQuery(text);
           }}
@@ -214,10 +232,15 @@ export default function Search() {
             id="search-input"
             ref={input}
             type="search"
-            inputMode="search"
+            readOnly={tv && !tvEditing}
+            inputMode={tv && !tvEditing ? "none" : "search"}
             enterKeyHint="search"
             autoComplete="off"
             value={text}
+            onClick={activateTvSearchInput}
+            onBlur={() => {
+              if (tv && tvEditing) setTvEditing(false);
+            }}
             onChange={(e) => setText(e.target.value)}
             placeholder={t.search.placeholder}
             className="h-12 w-full rounded-full border border-line-strong bg-surface-2 pr-24 pl-12 text-[16px] placeholder:text-fg-3 focus:border-accent focus:bg-surface-1 focus:outline-none md:h-13 [&::-webkit-search-cancel-button]:hidden"
@@ -230,7 +253,7 @@ export default function Search() {
                 onClick={() => {
                   setText("");
                   setQuery("");
-                  input.current?.focus();
+                  if (!tv) input.current?.focus();
                 }}
                 aria-label={t.search.clear}
                 className="grid size-9 place-items-center rounded-full text-fg-2 hover:bg-surface-3 hover:text-fg"

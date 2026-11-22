@@ -135,9 +135,9 @@ export function Rail() {
           ))}
         </nav>
 
-        <div className="mx-4 my-3 h-px bg-line [@media(max-height:540px)]:my-1.5" />
+        <div data-tv-hide className="mx-4 my-3 h-px bg-line [@media(max-height:540px)]:my-1.5" />
 
-        <div className="flex items-center justify-between px-4 pb-1 [@media(max-height:540px)]:pb-0">
+        <div data-tv-hide className="flex items-center justify-between px-4 pb-1 [@media(max-height:540px)]:pb-0">
           <span className="hidden text-xs font-medium text-fg-3 wide:block">{t.nav.yourCollection}</span>
           <button
             type="button"
@@ -150,7 +150,7 @@ export function Rail() {
           </button>
         </div>
 
-        <div className="scroll-area flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-2">
+        <div data-tv-hide className="scroll-area flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-2">
           <RailLink to={paths.favorites} label={t.nav.favorites} sub={t.common.tracks(favorites.length)}>
             <span className="grid size-full place-items-center bg-accent-soft text-accent-text">
               <HeartIcon size={20} weight="fill" />
@@ -168,7 +168,7 @@ export function Rail() {
           ))}
         </div>
 
-        <div className="flex border-t border-line p-2">
+        <div className="mt-auto flex border-t border-line p-2">
           <SettingsButton />
         </div>
       </div>
