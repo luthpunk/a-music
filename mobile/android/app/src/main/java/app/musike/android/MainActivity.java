@@ -38,6 +38,8 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge() != null ? getBridge().getWebView() : null;
         if (webView == null) return;
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        webView.getSettings().setSupportZoom(false);
+        webView.getSettings().setBuiltInZoomControls(false);
         if (tvDevice) {
             webView.setFocusable(true);
             webView.setFocusableInTouchMode(true);

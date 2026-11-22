@@ -32,14 +32,14 @@ html[data-tv="1"] #root > div {
   gap: 10px !important;
 }
 
-/* One clear, lightweight focus ring. */
+/* One clear, lightweight focus ring without clipping chips or pill buttons. */
 html[data-tv="1"] :focus {
-  outline: 3px solid var(--tv-ring) !important;
-  outline-offset: 2px !important;
+  outline: 2.5px solid var(--tv-ring) !important;
+  outline-offset: 0px !important;
   border-radius: 14px;
-  box-shadow: 0 0 0 4px var(--tv-ring-soft) !important;
-  transform: scale(1.02);
-  transition: transform 110ms ease-out, box-shadow 110ms ease-out, outline-color 110ms ease-out;
+  box-shadow: 0 0 0 3px var(--tv-ring-soft) !important;
+  transform: none;
+  transition: box-shadow 110ms ease-out, outline-color 110ms ease-out;
   z-index: 3;
 }
 
@@ -48,6 +48,14 @@ html[data-tv="1"] input:focus,
 html[data-tv="1"] li button:focus {
   transform: none;
   box-shadow: 0 0 0 3px var(--tv-ring-soft) !important;
+}
+
+html[data-tv="1"] .no-scrollbar {
+  padding-block: 8px !important;
+}
+
+html[data-tv="1"] [role="search"] button:focus {
+  outline-offset: -1px !important;
 }
 
 html[data-tv="1"] *:hover {

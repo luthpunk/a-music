@@ -84,6 +84,36 @@ export default function Search() {
   const playTrack = usePlayer((s) => s.playTrack);
   const tv = isTvMode();
 
+  const nativePromptSearch = (
+    globalThis as {
+      __amusicPromptSearch?: (options: { title: string; value: string; placeholder: string }) => Promise<{ submitted: boolean; value?: string }>;
+    }
+  ).__amusicPromptSearch;
+
+  const openTvSearch = async () => {
+    // On Android TV native app: use a native Android EditText dialog so the TV keyboard opens cleanly on OK
+    // with zero WebView auto-zoom, zero viewport glitch, and zero accidental popup when highlighting with D-pad.
+    if (tv && nativePromptSearch) {
+      try {
+        const res = await nativePromptSearch({
+          title: t.search.title,
+          value: text,
+          placeholder: t.search.placeholder,
+        });
+        if (res.submitted) {
+          const next = (res.value ?? "").trim();
+          setText(next);
+          if (!videoIdFromUrl(next)) setQuery(next);
+        }
+      } catch {
+        /* cancelled */
+      }
+      requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
+      return;
+    }
+    setTvEditing(true);
+  };
+
   const closeTvKeyboard = (refocusTrigger = false) => {
     setTvEditing(false);
     (globalThis as { __amusicHideKeyboard?: () => void }).__amusicHideKeyboard?.();
@@ -91,7 +121,7 @@ export default function Search() {
   };
 
   useEffect(() => {
-    if (!tv || !tvEditing) return;
+    if (!tv || !tvEditing || nativePromptSearch) return;
     const el = input.current;
     if (!el) return;
     el.focus({ preventScroll: true });
@@ -109,14 +139,10 @@ export default function Search() {
       }
     };
     window.addEventListener("keydown", onWinKey);
-    const timer = window.setTimeout(() => {
-      (globalThis as { __amusicShowKeyboard?: () => void }).__amusicShowKeyboard?.();
-    }, 40);
     return () => {
       window.removeEventListener("keydown", onWinKey);
-      window.clearTimeout(timer);
     };
-  }, [tv, tvEditing]);
+  }, [tv, tvEditing, nativePromptSearch]);
 
   const linkId = videoIdFromUrl(text);
   // "a, b, c" probably means three songs; offer to search each one (titles can have commas, so only offer).
@@ -252,12 +278,12 @@ export default function Search() {
               {t.search.inputLabel}
             </label>
             <MagnifyingGlassIcon size={20} className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-fg-2" />
-            {tv && !tvEditing ? (
+            {tv && (!tvEditing || !!nativePromptSearch) ? (
               <button
                 ref={trigger}
                 id="search-trigger"
                 type="button"
-                onClick={() => setTvEditing(true)}
+                onClick={() => void openTvSearch()}
                 aria-label={t.search.inputLabel}
                 className={cn(
                   "flex h-12 w-full items-center rounded-full border border-line-strong bg-surface-2 pr-5 pl-12 text-left text-[16px] transition-colors md:h-13",
@@ -329,7 +355,7 @@ export default function Search() {
         )}
 
         {suggestions.length > 0 && (
-          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:px-0">
+          <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 py-2 md:-mx-1 md:flex-wrap md:overflow-visible md:px-1">
             {suggestions.map((s) => (
               <button
                 key={s}
@@ -338,7 +364,7 @@ export default function Search() {
                   setText(s);
                   setQuery(s);
                 }}
-                className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3 text-[13px] text-fg-2 ring-1 ring-line transition-colors hover:text-fg"
+                className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3.5 text-[13px] text-fg-2 ring-1 ring-line transition-colors hover:text-fg"
               >
                 <ArrowUpLeftIcon size={13} className="text-fg-3" /> {s}
               </button>
@@ -462,7 +488,7 @@ export default function Search() {
                     {t.search.clearRecent}
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5 p-1">
                   {recent.map((r) => (
                     <button
                       key={r}
