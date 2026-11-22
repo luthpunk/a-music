@@ -26,7 +26,7 @@ const FOCUSABLE = [
   "[data-tv-focusable]",
 ].join(",");
 
-const REPEAT_MS = 90;
+const REPEAT_MS = 110;
 let lastMove = 0;
 
 export function isTvMode(): boolean {
@@ -95,10 +95,11 @@ function scrollableAncestors(el: HTMLElement): HTMLElement[] {
   return result;
 }
 
-function reveal(el: HTMLElement) {
+function reveal(el: HTMLElement, smooth: boolean) {
+  const behavior: ScrollBehavior = smooth ? "smooth" : "auto";
   const scrollers = scrollableAncestors(el);
   if (!scrollers.length) {
-    el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    el.scrollIntoView({ block: "nearest", inline: "nearest", behavior });
     return;
   }
   for (const scroller of scrollers) {
@@ -120,11 +121,11 @@ function reveal(el: HTMLElement) {
       if (r.top < s.top + marginTop) dy = r.top - s.top - marginTop;
       else if (r.bottom > s.bottom - marginBottom) dy = r.bottom - s.bottom + marginBottom;
     }
-    if (dx || dy) scroller.scrollBy({ left: dx, top: dy, behavior: "smooth" });
+    if (dx || dy) scroller.scrollBy({ left: dx, top: dy, behavior });
   }
 }
 
-function move(direction: "left" | "right" | "up" | "down"): boolean {
+function move(direction: "left" | "right" | "up" | "down", smooth: boolean): boolean {
   const current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const from = current && shown(current) ? box(current) : null;
   const horizontal = direction === "left" || direction === "right";
@@ -165,7 +166,7 @@ function move(direction: "left" | "right" | "up" | "down"): boolean {
 
   if (!best) return false;
   best.focus({ preventScroll: true });
-  reveal(best);
+  reveal(best, smooth);
   return true;
 }
 
@@ -299,7 +300,7 @@ export function installTvMode() {
           return;
         }
         lastMove = now;
-        if (move(key.replace("Arrow", "").toLowerCase() as "left" | "right" | "up" | "down")) handled();
+        if (move(key.replace("Arrow", "").toLowerCase() as "left" | "right" | "up" | "down", !event.repeat)) handled();
         return;
       }
 

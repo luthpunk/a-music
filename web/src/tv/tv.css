@@ -2,10 +2,9 @@
 
 html[data-tv="1"] {
   --tv-ring: var(--accent, #c3ec52);
-  --tv-ring-soft: color-mix(in srgb, var(--tv-ring) 35%, transparent);
+  --tv-ring-soft: color-mix(in srgb, var(--tv-ring) 32%, transparent);
   /* Responsive 10-foot scale: crisp on both 960x540 (2x DPR 1080p TV) and 1920x1080 (1x DPR). */
   font-size: clamp(15px, 1.35vw, 20px);
-  scroll-behavior: smooth;
 }
 
 html[data-tv="1"] body {
@@ -14,7 +13,7 @@ html[data-tv="1"] body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Disable heavy GPU effects (fullscreen SVG noise & backdrop blur) on Android TV for smooth 60fps transitions. */
+/* Disable heavy GPU effects (fullscreen SVG noise, backdrop blur, scroll-snap) on TV for silky 60fps. */
 html[data-tv="1"] .grain::after {
   display: none !important;
 }
@@ -26,36 +25,42 @@ html[data-tv="1"] .backdrop-blur-md {
   -webkit-backdrop-filter: none !important;
 }
 
-/* Safe overscan margin so edges and focus rings never clip on TV bezels. */
+/* Safe overscan margin so edges never clip on TV bezels. */
 html[data-tv="1"] #root > div {
   padding: 14px 22px !important;
   gap: 10px !important;
 }
 
-/* One clear, lightweight focus ring without clipping chips or pill buttons. */
+/* Universal inset-safe focus highlight: drawn cleanly inside every element's bounds so it NEVER clips
+   against overflow-hidden, scroll containers, sidebars, cards, or dialogs, with zero shadow-blur lag. */
 html[data-tv="1"] :focus {
-  outline: 2.5px solid var(--tv-ring) !important;
-  outline-offset: 0px !important;
+  outline: 3px solid var(--tv-ring) !important;
+  outline-offset: -2px !important;
   border-radius: 14px;
-  box-shadow: 0 0 0 3px var(--tv-ring-soft) !important;
-  transform: none;
-  transition: box-shadow 110ms ease-out, outline-color 110ms ease-out;
+  box-shadow: inset 0 0 0 3px var(--tv-ring-soft) !important;
+  transform: none !important;
+  transition: none !important;
   z-index: 3;
 }
 
-html[data-tv="1"] [role="slider"]:focus,
-html[data-tv="1"] input:focus,
-html[data-tv="1"] li button:focus {
-  transform: none;
-  box-shadow: 0 0 0 3px var(--tv-ring-soft) !important;
+/* Preserve pill shape when focusing pill buttons, search bars, sliders, and circular icon buttons. */
+html[data-tv="1"] .rounded-full:focus,
+html[data-tv="1"] [role="slider"]:focus {
+  border-radius: 9999px !important;
 }
 
-html[data-tv="1"] .no-scrollbar {
-  padding-block: 8px !important;
+/* Thin sliders keep a centered pill outline so the progress/volume bar stays readable. */
+html[data-tv="1"] [role="slider"]:focus {
+  outline: 2.5px solid var(--tv-ring) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
 }
 
-html[data-tv="1"] [role="search"] button:focus {
-  outline-offset: -1px !important;
+/* Circular accent color swatches in Settings keep an outer ring inside their padded radiogroup. */
+html[data-tv="1"] [role="radiogroup"] button[role="radio"].size-8:focus {
+  outline: 3px solid var(--tv-ring) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
 }
 
 html[data-tv="1"] *:hover {
@@ -67,9 +72,23 @@ html[data-tv="1"] ::-webkit-scrollbar {
   height: 0;
 }
 
-html[data-tv="1"] .scroll-area,
+html[data-tv="1"] .scroll-area {
+  scroll-padding: 76px 24px 36px 24px;
+}
+
+/* Smooth horizontal rails without scroll-snap fighting D-pad scrollBy. */
 html[data-tv="1"] .no-scrollbar {
-  scroll-padding: 76px 36px 36px 36px;
+  scroll-snap-type: none !important;
+  scroll-padding: 16px 36px !important;
+  padding-block: 6px !important;
+}
+
+/* Give card tiles comfortable breathing room so the inset focus ring frames artwork + text cleanly. */
+html[data-tv="1"] .no-scrollbar > button,
+html[data-tv="1"] .no-scrollbar > li > a,
+html[data-tv="1"] main ul.grid > li > a {
+  padding: 6px !important;
+  border-radius: 18px !important;
 }
 
 /* Hide desktop-only hints and redundant sidebar shortcuts on TV. */
@@ -125,13 +144,6 @@ html[data-tv="1"] aside.island:first-child a svg {
   flex: none;
 }
 
-/* The rail never scales on focus: a lifted row would touch its neighbours. */
-html[data-tv="1"] aside.island:first-child :focus {
-  transform: none;
-  box-shadow: 0 0 0 3px var(--tv-ring-soft) !important;
-  outline-offset: -1px !important;
-}
-
 /* logo mark */
 html[data-tv="1"] aside.island:first-child .size-8 {
   width: 28px !important;
@@ -170,8 +182,8 @@ html[data-tv="1"] input[type="text"] {
   padding-block: 0.6em;
 }
 
-/* ---- dialogs / sheets (Settings, Modals, Drawer) -------------------------
-   Smooth, lightweight GPU layer + inset-safe focus highlights so nothing clips left/right. */
+/* ---- dialogs / sheets / menus --------------------------------------------
+   Smooth, lightweight GPU layer + zero clipped focus highlights. */
 html[data-tv="1"] [role="dialog"] {
   max-width: min(680px, 82vw) !important;
   max-height: 84vh !important;
@@ -183,21 +195,13 @@ html[data-tv="1"] [role="dialog"] {
 
 html[data-tv="1"] [role="dialog"] .scroll-area {
   margin-inline: 0 !important;
-  padding: 4px 8px 12px !important;
+  padding: 6px 8px 12px !important;
   overflow-x: hidden !important;
   scroll-padding: 24px 0 !important;
 }
 
-html[data-tv="1"] [role="dialog"] :focus {
-  transform: none !important;
-  outline: 2.5px solid var(--tv-ring) !important;
-  outline-offset: -2px !important;
-  box-shadow: inset 0 0 0 2px var(--tv-ring-soft) !important;
-}
-
-/* Color swatch circles keep an outer ring inside a padded row. */
 html[data-tv="1"] [role="dialog"] [role="radiogroup"] {
-  padding: 4px;
+  padding: 6px;
 }
 
 html[data-tv="1"] [role="dialog"] h2 {
@@ -207,11 +211,11 @@ html[data-tv="1"] [role="dialog"] h2 {
 html[data-tv="1"] [role="dialog"] li,
 html[data-tv="1"] [role="dialog"] button,
 html[data-tv="1"] [role="dialog"] [role="radio"],
-html[data-tv="1"] [role="dialog"] [role="switch"] {
+html[data-tv="1"] [role="dialog"] [role="switch"],
+html[data-tv="1"] [role="menu"] [role="menuitem"] {
   border-radius: 14px;
 }
 
-/* keep list entries apart so the focus ring has room */
 html[data-tv="1"] [role="dialog"] ul {
   display: flex;
   flex-direction: column;

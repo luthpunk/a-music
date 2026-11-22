@@ -16,9 +16,9 @@ function Shortcut({ to, label, tracks, cover }: { to: string; label: string; tra
   const playList = usePlayer((s) => s.playList);
   const t = useT();
   return (
-    <div className="group relative flex h-14 items-center gap-2 overflow-hidden rounded-[12px] bg-surface-2 pr-2 transition-colors hover:bg-surface-3 md:h-16">
-      <Link to={to} className="flex h-full min-w-0 flex-1 items-center gap-3" aria-label={label}>
-        <span className="size-14 shrink-0 overflow-hidden md:size-16">{cover}</span>
+    <div className="group relative flex h-14 items-center gap-2 rounded-[12px] bg-surface-2 pr-2 transition-colors hover:bg-surface-3 md:h-16">
+      <Link to={to} className="flex h-full min-w-0 flex-1 items-center gap-3 rounded-[12px]" aria-label={label}>
+        <span className="size-14 shrink-0 overflow-hidden rounded-l-[12px] md:size-16">{cover}</span>
         <span className="min-w-0 flex-1 truncate text-[13px] font-semibold md:text-sm">{label}</span>
       </Link>
       {tracks.length > 0 && (
@@ -92,7 +92,7 @@ export default function Home() {
 
       {!empty && status === "ready" && (
         <div className="flex flex-col gap-10">
-          {show.homeShortcuts && <div className="grid grid-cols-2 gap-2 px-4 md:px-6 lg:grid-cols-3 2xl:grid-cols-4">
+          {show.homeShortcuts && <div className="grid grid-cols-2 gap-2.5 px-4 md:px-6 lg:grid-cols-3 2xl:grid-cols-4">
             <Shortcut
               to={paths.favorites}
               label={t.nav.favorites}

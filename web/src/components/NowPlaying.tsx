@@ -14,6 +14,7 @@ import { cn } from "../lib/format";
 import type { Track } from "../lib/types";
 import { selectCurrent, usePlayer, useStatusText } from "../player/player";
 import { useUi, type PanelTab } from "../stores/ui";
+import { isTvMode } from "../tv/tvMode";
 import { Artwork } from "./Artwork";
 import { FavoriteButton, ModeSwitch, Scrubber, Transport } from "./Controls";
 import { IconButton } from "./IconButton";
@@ -185,6 +186,7 @@ export function PanelDrawer() {
   const openPanel = useUi((s) => s.openPanel);
   const close = useUi((s) => s.closePanel);
   const reduce = useReducedMotion();
+  const tv = isTvMode();
   const t = useT();
 
   useEffect(() => {
@@ -198,17 +200,24 @@ export function PanelDrawer() {
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-40 hidden md:block xl:hidden">
-          <motion.div className="absolute inset-0 bg-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} />
+          <motion.div
+            className="absolute inset-0 bg-scrim"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={tv ? { duration: 0.14 } : undefined}
+            onClick={close}
+          />
           <motion.aside
             role="dialog"
             aria-modal="true"
             aria-label={t.nowPlaying.panel}
             data-escape-closes
-            initial={reduce ? { opacity: 0 } : { x: "105%" }}
+            initial={reduce || tv ? { opacity: 0, x: tv ? 20 : 0 } : { x: "105%" }}
             animate={{ x: 0, opacity: 1 }}
-            exit={reduce ? { opacity: 0 } : { x: "105%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 38 }}
-            className="island drawer-top absolute right-2 bottom-2 flex w-[380px] max-w-[calc(100vw-16px)]"
+            exit={reduce || tv ? { opacity: 0, x: tv ? 20 : 0 } : { x: "105%" }}
+            transition={tv ? { duration: 0.16, ease: [0.2, 0, 0, 1] } : { type: "spring", stiffness: 380, damping: 38 }}
+            className="island drawer-top absolute right-2 bottom-2 flex w-[380px] max-w-[calc(100vw-16px)] will-change-[opacity,transform]"
           >
             <div className="island-core flex w-full flex-col overflow-hidden">
               <div className="flex h-16 items-center justify-between px-3">
