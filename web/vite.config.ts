@@ -59,8 +59,8 @@ export default defineConfig(({ mode }) => {
             registerType: "autoUpdate",
             includeAssets: ["favicon.svg", "apple-touch-icon.png"],
             manifest: {
-              name: "Musike",
-              short_name: "Musike",
+              name: "A Music",
+              short_name: "A Music",
               description: "Your music, uninterrupted.",
               lang: "en",
               theme_color: "#0B0C0F",

@@ -114,7 +114,7 @@ function createMainWindow(url: string): BrowserWindow {
     minWidth: 380,
     minHeight: 560,
     show: false,
-    title: "Musike",
+    title: "A Music",
     icon: path.join(here, "icon.png"),
     backgroundColor: THEME.dark.color,
     // Our own title bar (drawn by the web app) with the native window buttons on top of it:

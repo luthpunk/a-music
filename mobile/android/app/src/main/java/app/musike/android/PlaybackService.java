@@ -115,7 +115,7 @@ public class PlaybackService extends Service {
             notifications.createNotificationChannel(channel);
         }
 
-        session = new MediaSession(this, "Musike");
+        session = new MediaSession(this, "A Music");
         session.setSessionActivity(openApp());
         if (Build.VERSION.SDK_INT < 26) {
             session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);

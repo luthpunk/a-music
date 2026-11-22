@@ -157,7 +157,7 @@ export const pt: Messages = {
     cantPlay: (title, reason) => `Não foi possível tocar "${title}". ${reason}`,
     aTrack: "esta faixa",
     browserCantPlay: "O navegador não conseguiu reproduzir este formato.",
-    serverDown: "Servidor do Musike inacessível. Ele está rodando?",
+    serverDown: "Servidor do A Music inacessível. Ele está rodando?",
     streamFailed: "O YouTube parou de entregar esta faixa. Tente de novo daqui a pouco.",
     offline: "Você está sem internet. Conecte-se para ouvir música.",
     httpError: (status) => `Erro ${status}`,
@@ -260,7 +260,7 @@ export const pt: Messages = {
     failed: "A busca falhou",
     emptyTitle: "Várias músicas de uma vez",
     emptyBody:
-      "O Musike busca cada uma e já seleciona o melhor resultado. Confira, troque o que vier errado e depois toque, favorite ou mande tudo para uma playlist.",
+      "O A Music busca cada uma e já seleciona o melhor resultado. Confira, troque o que vier errado e depois toque, favorite ou mande tudo para uma playlist.",
   },
 
   selection: {
@@ -340,12 +340,12 @@ export const pt: Messages = {
     toStable: "Voltar para Estável",
     updateTo: (version) => `Atualizar para ${version}`,
     check: "Verificar e atualizar",
-    noWinget: "O winget não está disponível. Instale o yt-dlp manualmente e reinicie o Musike.",
+    noWinget: "O winget não está disponível. Instale o yt-dlp manualmente e reinicie o A Music.",
     starting: "Iniciando",
     denoRole: "Resolve os desafios do YouTube",
     ffmpegRole: "Junta vídeo e áudio no modo HD",
     depMissingBefore: "Não encontrado. No terminal:",
-    depMissingAfter: "e reinicie o Musike.",
+    depMissingAfter: "e reinicie o A Music.",
   },
 
   customize: {
@@ -376,12 +376,12 @@ export const pt: Messages = {
 
   backup: {
     yourData: "Seus dados",
-    body: "Leve playlists, favoritas e histórico para outro computador ou para o app desktop: exporte um arquivo aqui e importe na outra instância do Musike.",
+    body: "Leve playlists, favoritas e histórico para outro computador ou para o app desktop: exporte um arquivo aqui e importe na outra instância do A Music.",
     export: "Exportar",
     exporting: "Exportando",
     import: "Importar",
     importing: "Importando",
-    pickFile: "Escolher arquivo de backup do Musike",
+    pickFile: "Escolher arquivo de backup do A Music",
     created: (playlists, favorites) =>
       `Backup criado: ${count(playlists, "playlist", "playlists")} e ${count(favorites, "favorita", "favoritas")}`,
     exportedAt: (date, time) => `Exportado em ${date} às ${time}`,
@@ -405,8 +405,8 @@ export const pt: Messages = {
     addedTracks: (n) => count(n, "faixa adicionada", "faixas adicionadas"),
     addedFavorites: (n) => count(n, "favorita", "favoritas"),
     unreadable: "Não foi possível ler o arquivo. Ele precisa ser um backup .musike.json.",
-    notBackup: "Este arquivo não é um backup do Musike.",
-    newer: "Backup feito por uma versão mais nova do Musike. Atualize o app para importar.",
+    notBackup: "Este arquivo não é um backup do A Music.",
+    newer: "Backup feito por uma versão mais nova do A Music. Atualize o app para importar.",
   },
 
   toasts: {

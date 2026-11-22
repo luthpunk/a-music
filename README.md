@@ -2,7 +2,7 @@
 
 <img src="desktop/build/icon.png" width="96" alt="Musike logo: three equalizer bars forming an M" />
 
-# Musike
+# A Music
 
 **Your music, uninterrupted.**
 

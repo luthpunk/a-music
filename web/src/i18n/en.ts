@@ -163,7 +163,7 @@ export const en = {
     cantPlay: (title: string, reason: string) => `Couldn't play "${title}". ${reason}`,
     aTrack: "this track",
     browserCantPlay: "The browser couldn't play this format.",
-    serverDown: "Can't reach the Musike server. Is it running?",
+    serverDown: "Can't reach the A Music server. Is it running?",
     streamFailed: "YouTube stopped serving this track. Try it again in a moment.",
     offline: "You're offline. Connect to the internet to play music.",
     httpError: (status: number) => `Error ${status}`,
@@ -266,7 +266,7 @@ export const en = {
     failed: "Search failed",
     emptyTitle: "Many songs at once",
     emptyBody:
-      "Musike searches for each one and picks the best match. Check them, swap any that came out wrong, then play, favorite or send them all to a playlist.",
+      "A Music searches for each one and picks the best match. Check them, swap any that came out wrong, then play, favorite or send them all to a playlist.",
   },
 
   selection: {
@@ -346,12 +346,12 @@ export const en = {
     toStable: "Back to Stable",
     updateTo: (version: string) => `Update to ${version}`,
     check: "Check and update",
-    noWinget: "winget isn't available. Install yt-dlp manually and restart Musike.",
+    noWinget: "winget isn't available. Install yt-dlp manually and restart A Music.",
     starting: "Starting",
     denoRole: "Solves YouTube's challenges",
     ffmpegRole: "Merges video and audio in HD mode",
     depMissingBefore: "Not found. In a terminal:",
-    depMissingAfter: "and restart Musike.",
+    depMissingAfter: "and restart A Music.",
   },
 
   customize: {
@@ -382,12 +382,12 @@ export const en = {
 
   backup: {
     yourData: "Your data",
-    body: "Take your playlists, favorites and history to another computer or to the desktop app: export a file here and import it into the other Musike.",
+    body: "Take your playlists, favorites and history to another computer or to the desktop app: export a file here and import it into the other A Music.",
     export: "Export",
     exporting: "Exporting",
     import: "Import",
     importing: "Importing",
-    pickFile: "Choose a Musike backup file",
+    pickFile: "Choose an A Music backup file",
     created: (playlists: number, favorites: number) =>
       `Backup created: ${count(playlists, "playlist", "playlists")} and ${count(favorites, "favorite", "favorites")}`,
     exportedAt: (date: string, time: string) => `Exported on ${date} at ${time}`,
@@ -411,8 +411,8 @@ export const en = {
     addedTracks: (n: number) => count(n, "track added", "tracks added"),
     addedFavorites: (n: number) => count(n, "favorite", "favorites"),
     unreadable: "Couldn't read the file. It needs to be a .musike.json backup.",
-    notBackup: "This file isn't a Musike backup.",
-    newer: "This backup was made by a newer Musike. Update the app to import it.",
+    notBackup: "This file isn't an A Music backup.",
+    newer: "This backup was made by a newer A Music. Update the app to import it.",
   },
 
   toasts: {

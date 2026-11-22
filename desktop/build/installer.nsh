@@ -8,9 +8,9 @@
   Push $R0
   ; Electron keeps app data per user, whatever the install mode: use the user's own Roaming folder.
   ReadEnvStr $R0 APPDATA
-  IfFileExists "$R0\Musike\data\library.json" 0 musike_no_library
-    CreateDirectory "$R0\Musike\backups"
-    CopyFiles /SILENT "$R0\Musike\data\library.json" "$R0\Musike\backups\library-before-install-${VERSION}.json"
+  IfFileExists "$R0\A Music\data\library.json" 0 musike_no_library
+    CreateDirectory "$R0\A Music\backups"
+    CopyFiles /SILENT "$R0\A Music\data\library.json" "$R0\A Music\backups\library-before-install-${VERSION}.json"
   musike_no_library:
   Pop $R0
 !macroend

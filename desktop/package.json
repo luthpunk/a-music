@@ -1,6 +1,6 @@
 {
   "name": "musike-desktop",
-  "productName": "Musike",
+  "productName": "A Music",
   "version": "1.5.1",
   "description": "Your music, uninterrupted.",
   "author": "Musike",
@@ -18,7 +18,7 @@
   },
   "build": {
     "appId": "app.musike.desktop",
-    "productName": "Musike",
+    "productName": "A Music",
     "copyright": "Musike",
     "directories": {
       "output": "out",
@@ -96,7 +96,7 @@
       "packageName": "musike"
     },
     "dmg": {
-      "title": "Musike ${version}"
+      "title": "A Music ${version}"
     },
     "nsis": {
       "oneClick": false,
@@ -104,7 +104,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "Musike",
+      "shortcutName": "A Music",
       "runAfterFinish": true,
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
