@@ -79,24 +79,44 @@ export default function Search() {
   const [genresOpen, setGenresOpenState] = useState(() => genresOpenMemo);
   const [tvEditing, setTvEditing] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const isMd = useMediaQuery(MD);
   const playTrack = usePlayer((s) => s.playTrack);
   const tv = isTvMode();
 
-  const activateTvSearchInput = () => {
-    const el = input.current;
-    if (!tv || !el || tvEditing) return;
-    // Flip readOnly synchronously inside the OK/click user gesture so Android TV opens the soft keyboard right away.
-    el.readOnly = false;
-    el.removeAttribute("readonly");
-    el.inputMode = "search";
-    el.blur();
-    el.focus();
-    setTvEditing(true);
-    window.setTimeout(() => {
-      (globalThis as { __amusicShowKeyboard?: () => void }).__amusicShowKeyboard?.();
-    }, 30);
+  const closeTvKeyboard = (refocusTrigger = false) => {
+    setTvEditing(false);
+    (globalThis as { __amusicHideKeyboard?: () => void }).__amusicHideKeyboard?.();
+    if (refocusTrigger) requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
   };
+
+  useEffect(() => {
+    if (!tv || !tvEditing) return;
+    const el = input.current;
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    const end = el.value.length;
+    try {
+      el.setSelectionRange(end, end);
+    } catch {
+      /* some inputs don't support selectionRange */
+    }
+    const onWinKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closeTvKeyboard(true);
+      }
+    };
+    window.addEventListener("keydown", onWinKey);
+    const timer = window.setTimeout(() => {
+      (globalThis as { __amusicShowKeyboard?: () => void }).__amusicShowKeyboard?.();
+    }, 40);
+    return () => {
+      window.removeEventListener("keydown", onWinKey);
+      window.clearTimeout(timer);
+    };
+  }, [tv, tvEditing]);
 
   const linkId = videoIdFromUrl(text);
   // "a, b, c" probably means three songs; offer to search each one (titles can have commas, so only offer).
@@ -218,50 +238,79 @@ export default function Search() {
           role="search"
           onSubmit={(e) => {
             e.preventDefault();
-            if (tv) setTvEditing(false);
-            input.current?.blur();
+            if (tv) {
+              closeTvKeyboard(true);
+            } else {
+              input.current?.blur();
+            }
             if (!linkId) setQuery(text);
           }}
-          className="relative"
+          className="flex items-center gap-2"
         >
-          <label htmlFor="search-input" className="sr-only">
-            {t.search.inputLabel}
-          </label>
-          <MagnifyingGlassIcon size={20} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-fg-2" />
-          <input
-            id="search-input"
-            ref={input}
-            type="search"
-            readOnly={tv && !tvEditing}
-            inputMode={tv && !tvEditing ? "none" : "search"}
-            enterKeyHint="search"
-            autoComplete="off"
-            value={text}
-            onClick={activateTvSearchInput}
-            onBlur={() => {
-              if (tv && tvEditing) setTvEditing(false);
-            }}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={t.search.placeholder}
-            className="h-12 w-full rounded-full border border-line-strong bg-surface-2 pr-24 pl-12 text-[16px] placeholder:text-fg-3 focus:border-accent focus:bg-surface-1 focus:outline-none md:h-13 [&::-webkit-search-cancel-button]:hidden"
-          />
-          <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-2">
-            {!text && <kbd className="kbd hidden md:inline">/</kbd>}
-            {text && (
+          <div className="relative min-w-0 flex-1">
+            <label htmlFor="search-input" className="sr-only">
+              {t.search.inputLabel}
+            </label>
+            <MagnifyingGlassIcon size={20} className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-fg-2" />
+            {tv && !tvEditing ? (
               <button
+                ref={trigger}
+                id="search-trigger"
                 type="button"
-                onClick={() => {
-                  setText("");
-                  setQuery("");
-                  if (!tv) input.current?.focus();
-                }}
-                aria-label={t.search.clear}
-                className="grid size-9 place-items-center rounded-full text-fg-2 hover:bg-surface-3 hover:text-fg"
+                onClick={() => setTvEditing(true)}
+                aria-label={t.search.inputLabel}
+                className={cn(
+                  "flex h-12 w-full items-center rounded-full border border-line-strong bg-surface-2 pr-5 pl-12 text-left text-[16px] transition-colors md:h-13",
+                  text ? "text-fg" : "text-fg-3",
+                )}
               >
-                <XIcon size={18} />
+                <span className="truncate">{text || t.search.placeholder}</span>
               </button>
+            ) : (
+              <input
+                id="search-input"
+                ref={input}
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                data-escape-closes={tv ? "" : undefined}
+                value={text}
+                onKeyDown={(e) => {
+                  if (tv && e.key === "Escape") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeTvKeyboard(true);
+                  }
+                }}
+                onBlur={(e) => {
+                  // Only leave TV edit mode when focus actually moves to another control (D-pad navigation), not IME transitions.
+                  if (tv && tvEditing && e.relatedTarget instanceof HTMLElement) {
+                    closeTvKeyboard(false);
+                  }
+                }}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={t.search.placeholder}
+                className="h-12 w-full rounded-full border border-line-strong bg-surface-2 pr-12 pl-12 text-[16px] placeholder:text-fg-3 focus:border-accent focus:bg-surface-1 focus:outline-none md:h-13 [&::-webkit-search-cancel-button]:hidden"
+              />
             )}
+            {!text && !tv && <kbd className="kbd pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 md:inline">/</kbd>}
           </div>
+          {text && (
+            <button
+              type="button"
+              onClick={() => {
+                setText("");
+                setQuery("");
+                if (tv) closeTvKeyboard(true);
+                else input.current?.focus();
+              }}
+              aria-label={t.search.clear}
+              className="grid size-11 shrink-0 place-items-center rounded-full bg-surface-2 text-fg-2 ring-1 ring-line hover:bg-surface-3 hover:text-fg"
+            >
+              <XIcon size={18} />
+            </button>
+          )}
         </form>
 
         {listTerms.length > 1 && (

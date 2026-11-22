@@ -45,4 +45,16 @@ public class MusikeDevicePlugin extends Plugin {
             call.resolve();
         });
     }
+
+    @PluginMethod
+    public void hideKeyboard(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+            if (webView != null) {
+                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.hideSoftInputFromWindow(webView.getWindowToken(), 0);
+            }
+            call.resolve();
+        });
+    }
 }
