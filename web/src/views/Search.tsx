@@ -77,72 +77,59 @@ export default function Search() {
   const [linkTrack, setLinkTrack] = useState<Track | "loading" | "error" | null>(null);
   const [retry, setRetry] = useState(0);
   const [genresOpen, setGenresOpenState] = useState(() => genresOpenMemo);
-  const [tvEditing, setTvEditing] = useState(false);
+  const [tvTyping, setTvTyping] = useState(false);
+  const tvTypingRef = useRef(false);
   const input = useRef<HTMLInputElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
   const isMd = useMediaQuery(MD);
   const playTrack = usePlayer((s) => s.playTrack);
   const tv = isTvMode();
 
-  const nativePromptSearch = (
-    globalThis as {
-      __amusicPromptSearch?: (options: { title: string; value: string; placeholder: string }) => Promise<{ submitted: boolean; value?: string }>;
+  const stopTvTyping = () => {
+    if (!tv) return;
+    tvTypingRef.current = false;
+    setTvTyping(false);
+    const el = input.current;
+    if (el) {
+      el.readOnly = true;
+      el.inputMode = "none";
     }
-  ).__amusicPromptSearch;
-
-  const openTvSearch = async () => {
-    // On Android TV native app: use a native Android EditText dialog so the TV keyboard opens cleanly on OK
-    // with zero WebView auto-zoom, zero viewport glitch, and zero accidental popup when highlighting with D-pad.
-    if (tv && nativePromptSearch) {
-      try {
-        const res = await nativePromptSearch({
-          title: t.search.title,
-          value: text,
-          placeholder: t.search.placeholder,
-        });
-        if (res.submitted) {
-          const next = (res.value ?? "").trim();
-          setText(next);
-          if (!videoIdFromUrl(next)) setQuery(next);
-        }
-      } catch {
-        /* cancelled */
-      }
-      requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
-      return;
-    }
-    setTvEditing(true);
+    (globalThis as { __amusicHideKeyboard?: () => void }).__amusicHideKeyboard?.();
   };
 
-  const closeTvKeyboard = (refocusTrigger = false) => {
-    setTvEditing(false);
-    (globalThis as { __amusicHideKeyboard?: () => void }).__amusicHideKeyboard?.();
-    if (refocusTrigger) requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
+  const startTvTyping = () => {
+    const el = input.current;
+    if (!tv || !el || tvTypingRef.current) return;
+    tvTypingRef.current = true;
+    // Unlock the original <input> first, then dispatch a real native tap onto it so Chromium WebView opens the TV keyboard.
+    el.readOnly = false;
+    el.removeAttribute("readonly");
+    el.inputMode = "search";
+    setTvTyping(true);
+    requestAnimationFrame(() => {
+      const r = el.getBoundingClientRect();
+      (
+        globalThis as { __amusicTapToType?: (coords: { x: number; y: number; vw: number; vh: number }) => void }
+      ).__amusicTapToType?.({
+        x: r.left + r.width / 2,
+        y: r.top + r.height / 2,
+        vw: window.innerWidth,
+        vh: window.innerHeight,
+      });
+    });
   };
 
   useEffect(() => {
-    if (!tv || !tvEditing || nativePromptSearch) return;
-    const el = input.current;
-    if (!el) return;
-    el.focus({ preventScroll: true });
-    const end = el.value.length;
-    try {
-      el.setSelectionRange(end, end);
-    } catch {
-      /* some inputs don't support selectionRange */
-    }
+    if (!tv || !tvTyping) return;
     const onWinKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        closeTvKeyboard(true);
+        stopTvTyping();
       }
     };
     window.addEventListener("keydown", onWinKey);
-    return () => {
-      window.removeEventListener("keydown", onWinKey);
-    };
-  }, [tv, tvEditing, nativePromptSearch]);
+    return () => window.removeEventListener("keydown", onWinKey);
+  }, [tv, tvTyping]);
 
   const linkId = videoIdFromUrl(text);
   // "a, b, c" probably means three songs; offer to search each one (titles can have commas, so only offer).
@@ -265,7 +252,7 @@ export default function Search() {
           onSubmit={(e) => {
             e.preventDefault();
             if (tv) {
-              closeTvKeyboard(true);
+              stopTvTyping();
             } else {
               input.current?.blur();
             }
@@ -278,48 +265,34 @@ export default function Search() {
               {t.search.inputLabel}
             </label>
             <MagnifyingGlassIcon size={20} className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-fg-2" />
-            {tv && (!tvEditing || !!nativePromptSearch) ? (
-              <button
-                ref={trigger}
-                id="search-trigger"
-                type="button"
-                onClick={() => void openTvSearch()}
-                aria-label={t.search.inputLabel}
-                className={cn(
-                  "flex h-12 w-full items-center rounded-full border border-line-strong bg-surface-2 pr-5 pl-12 text-left text-[16px] transition-colors md:h-13",
-                  text ? "text-fg" : "text-fg-3",
-                )}
-              >
-                <span className="truncate">{text || t.search.placeholder}</span>
-              </button>
-            ) : (
-              <input
-                id="search-input"
-                ref={input}
-                type="search"
-                inputMode="search"
-                enterKeyHint="search"
-                autoComplete="off"
-                data-escape-closes={tv ? "" : undefined}
-                value={text}
-                onKeyDown={(e) => {
-                  if (tv && e.key === "Escape") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    closeTvKeyboard(true);
-                  }
-                }}
-                onBlur={(e) => {
-                  // Only leave TV edit mode when focus actually moves to another control (D-pad navigation), not IME transitions.
-                  if (tv && tvEditing && e.relatedTarget instanceof HTMLElement) {
-                    closeTvKeyboard(false);
-                  }
-                }}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={t.search.placeholder}
-                className="h-12 w-full rounded-full border border-line-strong bg-surface-2 pr-12 pl-12 text-[16px] placeholder:text-fg-3 focus:border-accent focus:bg-surface-1 focus:outline-none md:h-13 [&::-webkit-search-cancel-button]:hidden"
-              />
-            )}
+            <input
+              id="search-input"
+              ref={input}
+              type="search"
+              readOnly={tv && !tvTyping}
+              inputMode={tv && !tvTyping ? "none" : "search"}
+              enterKeyHint="search"
+              autoComplete="off"
+              data-escape-closes={tv && tvTyping ? "" : undefined}
+              value={text}
+              onClick={startTvTyping}
+              onKeyDown={(e) => {
+                if (tv && tvTyping && e.key === "Escape") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  stopTvTyping();
+                }
+              }}
+              onBlur={(e) => {
+                // Only lock typing mode back when focus moves to another control (D-pad navigation), not IME transitions.
+                if (tv && tvTypingRef.current && e.relatedTarget instanceof HTMLElement) {
+                  stopTvTyping();
+                }
+              }}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={t.search.placeholder}
+              className="h-12 w-full rounded-full border border-line-strong bg-surface-2 pr-12 pl-12 text-[16px] placeholder:text-fg-3 focus:border-accent focus:bg-surface-1 focus:outline-none md:h-13 [&::-webkit-search-cancel-button]:hidden"
+            />
             {!text && !tv && <kbd className="kbd pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 md:inline">/</kbd>}
           </div>
           {text && (
@@ -328,8 +301,12 @@ export default function Search() {
               onClick={() => {
                 setText("");
                 setQuery("");
-                if (tv) closeTvKeyboard(true);
-                else input.current?.focus();
+                if (tv) {
+                  stopTvTyping();
+                  input.current?.focus({ preventScroll: true });
+                } else {
+                  input.current?.focus();
+                }
               }}
               aria-label={t.search.clear}
               className="grid size-11 shrink-0 place-items-center rounded-full bg-surface-2 text-fg-2 ring-1 ring-line hover:bg-surface-3 hover:text-fg"

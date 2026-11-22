@@ -1,19 +1,13 @@
 package app.musike.android;
 
-import android.app.AlertDialog;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.drawable.GradientDrawable;
-import android.text.InputType;
-import android.view.KeyEvent;
-import android.view.WindowManager;
-import android.view.inputmethod.EditorInfo;
+import android.os.SystemClock;
+import android.view.MotionEvent;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -41,120 +35,29 @@ public class MusikeDevicePlugin extends Plugin {
         call.resolve(result);
     }
 
+    /**
+     * Dispatches a genuine native tap at the input's coordinates inside the WebView so Chromium
+     * opens the Android TV soft keyboard reliably right onto the original HTML <input>.
+     */
     @PluginMethod
-    public void promptSearch(PluginCall call) {
-        String initial = call.getString("value", "");
-        String placeholder = call.getString("placeholder", "Search music");
-        String title = call.getString("title", "Search");
-        getActivity().runOnUiThread(() -> {
-            Context ctx = getActivity();
-            float dp = ctx.getResources().getDisplayMetrics().density;
-
-            LinearLayout container = new LinearLayout(ctx);
-            container.setOrientation(LinearLayout.VERTICAL);
-            int padH = Math.round(24 * dp);
-            int padV = Math.round(16 * dp);
-            container.setPadding(padH, padV, padH, Math.round(8 * dp));
-
-            EditText input = new EditText(ctx);
-            input.setText(initial != null ? initial : "");
-            if (input.getText() != null) input.setSelection(input.getText().length());
-            input.setHint(placeholder);
-            input.setHintTextColor(0xFF9BA1AD);
-            input.setTextColor(0xFFECEEF2);
-            input.setTextSize(18f);
-            input.setSingleLine(true);
-            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-            input.setImeOptions(EditorInfo.IME_ACTION_SEARCH | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
-
-            GradientDrawable bg = new GradientDrawable();
-            bg.setColor(0xFF121318);
-            bg.setCornerRadius(14 * dp);
-            bg.setStroke(Math.round(2 * dp), 0xFFC3EC52);
-            input.setBackground(bg);
-            int inPadH = Math.round(16 * dp);
-            int inPadV = Math.round(12 * dp);
-            input.setPadding(inPadH, inPadV, inPadH, inPadV);
-            container.addView(input);
-
-            final boolean[] resolved = { false };
-
-            AlertDialog dialog = new AlertDialog.Builder(ctx, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(title)
-                .setView(container)
-                .setPositiveButton(android.R.string.search_go, (d, w) -> {
-                    if (resolved[0]) return;
-                    resolved[0] = true;
-                    JSObject res = new JSObject();
-                    res.put("submitted", true);
-                    res.put("value", input.getText() != null ? input.getText().toString() : "");
-                    call.resolve(res);
-                })
-                .setNegativeButton(android.R.string.cancel, (d, w) -> {
-                    if (resolved[0]) return;
-                    resolved[0] = true;
-                    JSObject res = new JSObject();
-                    res.put("submitted", false);
-                    call.resolve(res);
-                })
-                .create();
-
-            dialog.setOnCancelListener((d) -> {
-                if (resolved[0]) return;
-                resolved[0] = true;
-                JSObject res = new JSObject();
-                res.put("submitted", false);
-                call.resolve(res);
-            });
-
-            dialog.setOnDismissListener((d) -> {
-                WebView webView = getBridge() != null ? getBridge().getWebView() : null;
-                if (webView != null) {
-                    webView.post(webView::requestFocus);
-                }
-            });
-
-            input.setOnEditorActionListener((v, actionId, event) -> {
-                if (
-                    actionId == EditorInfo.IME_ACTION_SEARCH ||
-                    actionId == EditorInfo.IME_ACTION_DONE ||
-                    actionId == EditorInfo.IME_ACTION_GO ||
-                    (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)
-                ) {
-                    if (!resolved[0]) {
-                        resolved[0] = true;
-                        JSObject res = new JSObject();
-                        res.put("submitted", true);
-                        res.put("value", input.getText() != null ? input.getText().toString() : "");
-                        call.resolve(res);
-                    }
-                    dialog.dismiss();
-                    return true;
-                }
-                return false;
-            });
-
-            if (dialog.getWindow() != null) {
-                dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-            }
-
-            dialog.show();
-            input.requestFocus();
-            input.postDelayed(() -> {
-                InputMethodManager imm = (InputMethodManager) ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
-            }, 80);
-        });
-    }
-
-    @PluginMethod
-    public void showKeyboard(PluginCall call) {
+    public void tapToType(PluginCall call) {
+        Double x = call.getDouble("x");
+        Double y = call.getDouble("y");
+        Double vw = call.getDouble("vw");
+        Double vh = call.getDouble("vh");
         getActivity().runOnUiThread(() -> {
             WebView webView = getBridge() != null ? getBridge().getWebView() : null;
-            if (webView != null) {
+            if (webView != null && x != null && y != null && vw != null && vh != null && vw > 0 && vh > 0) {
                 webView.requestFocus();
-                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm != null) imm.showSoftInput(webView, InputMethodManager.SHOW_IMPLICIT);
+                float px = (float) (x * webView.getWidth() / vw);
+                float py = (float) (y * webView.getHeight() / vh);
+                long now = SystemClock.uptimeMillis();
+                MotionEvent down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, px, py, 0);
+                MotionEvent up = MotionEvent.obtain(now, now + 25, MotionEvent.ACTION_UP, px, py, 0);
+                webView.dispatchTouchEvent(down);
+                webView.dispatchTouchEvent(up);
+                down.recycle();
+                up.recycle();
             }
             call.resolve();
         });

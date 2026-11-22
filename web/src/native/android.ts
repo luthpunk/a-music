@@ -2,20 +2,17 @@ import { App } from "@capacitor/app";
 import { Capacitor, registerPlugin, SystemBars, SystemBarsStyle } from "@capacitor/core";
 import { installTvMode } from "../tv/tvMode";
 
-type SearchPromptOptions = { title: string; value: string; placeholder: string };
-type SearchPromptResult = { submitted: boolean; value?: string };
+type TapCoords = { x: number; y: number; vw: number; vh: number };
 
 /** MusikeDevicePlugin.java: what kind of device this is. */
 const Device = registerPlugin<{
   info(): Promise<{ tv: boolean }>;
-  promptSearch(options: SearchPromptOptions): Promise<SearchPromptResult>;
-  showKeyboard(): Promise<void>;
+  tapToType(coords: TapCoords): Promise<void>;
   hideKeyboard(): Promise<void>;
 }>("MusikeDevice", {
   web: () => ({
     info: async () => ({ tv: false }),
-    promptSearch: async () => ({ submitted: false }),
-    showKeyboard: async () => {},
+    tapToType: async () => {},
     hideKeyboard: async () => {},
   }),
 });
@@ -23,13 +20,11 @@ const Device = registerPlugin<{
 // How the app fits into Android itself: Android TV, the Back button and the system bars.
 if (Capacitor.isNativePlatform()) {
   const host = globalThis as {
-    __amusicPromptSearch?: (options: SearchPromptOptions) => Promise<SearchPromptResult>;
-    __amusicShowKeyboard?: () => void;
+    __amusicTapToType?: (coords: TapCoords) => void;
     __amusicHideKeyboard?: () => void;
   };
-  host.__amusicPromptSearch = (options) => Device.promptSearch(options);
-  host.__amusicShowKeyboard = () => {
-    void Device.showKeyboard().catch(() => {});
+  host.__amusicTapToType = (coords) => {
+    void Device.tapToType(coords).catch(() => {});
   };
   host.__amusicHideKeyboard = () => {
     void Device.hideKeyboard().catch(() => {});
